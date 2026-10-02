@@ -37,6 +37,7 @@ public class ProjectTaskTransformationService {
     private final UserService userService;
     private final BoundaryService boundaryService;
     private final ProjectFactoryService projectFactoryService;
+    private final HouseholdProjectCorrectionService householdProjectCorrectionService;
     private static final Set<String> ADDITIONAL_DETAILS_DOUBLE_FIELDS = new HashSet<>(Arrays.asList(QUANTITY_WASTED));
     private static final Set<String> ADDITIONAL_DETAILS_INTEGER_FIELDS = new HashSet<>(Arrays.asList(NO_OF_ROOMS_SPRAYED_KEY));
     private static final Set<String> BENEFICIARY_INFO_STRING_KEYS = new HashSet<>(Arrays.asList(
@@ -52,7 +53,7 @@ public class ProjectTaskTransformationService {
     }
 
 
-    public ProjectTaskTransformationService(TransformerProperties transformerProperties, Producer producer, ObjectMapper objectMapper, CommonUtils commonUtils, ProjectService projectService, ProductService productService, IndividualService individualService, HouseholdService householdService, UserService userService, BoundaryService boundaryService, ProjectFactoryService projectFactoryService) {
+    public ProjectTaskTransformationService(TransformerProperties transformerProperties, Producer producer, ObjectMapper objectMapper, CommonUtils commonUtils, ProjectService projectService, ProductService productService, IndividualService individualService, HouseholdService householdService, UserService userService, BoundaryService boundaryService, ProjectFactoryService projectFactoryService, HouseholdProjectCorrectionService householdProjectCorrectionService) {
         this.transformerProperties = transformerProperties;
         this.producer = producer;
         this.objectMapper = objectMapper;
@@ -64,6 +65,7 @@ public class ProjectTaskTransformationService {
         this.userService = userService;
         this.boundaryService = boundaryService;
         this.projectFactoryService = projectFactoryService;
+        this.householdProjectCorrectionService = householdProjectCorrectionService;
     }
 
     public void transform(List<Task> taskList) {
@@ -135,6 +137,11 @@ public class ProjectTaskTransformationService {
             String projectBeneficiaryClientReferenceId = task.getProjectBeneficiaryClientReferenceId();
             beneficiaryInfo.putAll(getProjectBeneficiaryDetails(projectBeneficiaryClientReferenceId, projectBeneficiaryType, tenantId));
         }
+
+        householdProjectCorrectionService.correct(
+                (String) (beneficiaryInfo.containsKey(HOUSEHOLD_ID) ? beneficiaryInfo.get(HOUSEHOLD_ID) : beneficiaryInfo.get(HOUSEHOLD_CLIENT_REFERENCE_ID)),
+                (String) (beneficiaryInfo.containsKey(INDIVIDUAL_CLIENT_REFERENCE_ID) ? beneficiaryInfo.get(INDIVIDUAL_CLIENT_REFERENCE_ID) : beneficiaryInfo.get(INDIVIDUAL_ID)),
+                project, tenantId);
 
         Task constructedTask = constructTaskResourceIfNull(task);
         Map<String, String> userInfoMap = userService.getUserInfo(task.getTenantId(), task.getClientAuditDetails().getCreatedBy());

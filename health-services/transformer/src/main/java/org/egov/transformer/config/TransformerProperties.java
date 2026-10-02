@@ -107,6 +107,15 @@ public class TransformerProperties {
     @Value("${egov.search.household.url}")
     private String householdSearchUrl;
 
+    @Value("${egov.search.household.member.url:/household/member/v1/_search}")
+    private String householdMemberSearchUrl;
+
+    @Value("${transformer.household.project.correction.enabled:true}")
+    private Boolean householdProjectCorrectionEnabled;
+
+    @Value("${transformer.household.project.correction.cache.ttl.minutes:43200}")
+    private Long householdProjectCorrectionCacheTtlMinutes;
+
     @Value("${egov.individual.host}")
     private String individualHost;
 

@@ -357,13 +357,7 @@ public class CommonUtils {
         if (ObjectUtils.isNotEmpty(projectStaff)) {
             Project project = projectService.getProject(projectStaff.getProjectId(), tenantId);
             if (ObjectUtils.isNotEmpty(project)) {
-                String campaignId = projectFactoryService.getCampaignIdFromCampaignNumber(project.getTenantId(), true, project.getReferenceID());
-                projectInfo.setProjectTypeId(project.getProjectTypeId());
-                projectInfo.setProjectId(projectStaff.getProjectId());
-                projectInfo.setProjectType(project.getProjectType());
-                projectInfo.setProjectName(project.getName());
-                projectInfo.setCampaignNumber(project.getReferenceID());
-                projectInfo.setCampaignId(campaignId);
+                projectInfo = projectInfoFromProject(project);
                 userIdVsProjectInfoCache.put(userId, projectInfo);
             }
         }
@@ -371,15 +365,31 @@ public class CommonUtils {
         return projectInfo;
     }
 
+    public ProjectInfo projectInfoFromProject(Project project) {
+        ProjectInfo projectInfo = new ProjectInfo();
+        String campaignId = projectFactoryService.getCampaignIdFromCampaignNumber(project.getTenantId(), true, project.getReferenceID());
+        projectInfo.setProjectTypeId(project.getProjectTypeId());
+        projectInfo.setProjectId(project.getId());
+        projectInfo.setProjectType(project.getProjectType());
+        projectInfo.setProjectName(project.getName());
+        projectInfo.setCampaignNumber(project.getReferenceID());
+        projectInfo.setCampaignId(campaignId);
+        return projectInfo;
+    }
+
+    public void setProjectDetails(ProjectInfo target, ProjectInfo source) {
+        target.setProjectId(source.getProjectId());
+        target.setProjectTypeId(source.getProjectTypeId());
+        target.setProjectType(source.getProjectType());
+        target.setProjectName(source.getProjectName());
+        target.setCampaignNumber(source.getCampaignNumber());
+        target.setCampaignId(source.getCampaignId());
+    }
+
     public void addProjectDetailsForUserIdAndTenantId(ProjectInfo projectInfo, String userId, String tenantId) {
         ProjectInfo projectDetails = projectDetailsFromUserId(userId, tenantId);
         if(ObjectUtils.isNotEmpty(projectDetails)) {
-            projectInfo.setProjectId(projectDetails.getProjectId());
-            projectInfo.setProjectTypeId(projectDetails.getProjectTypeId());
-            projectInfo.setProjectType(projectDetails.getProjectType());
-            projectInfo.setProjectName(projectDetails.getProjectName());
-            projectInfo.setCampaignNumber(projectDetails.getCampaignNumber());
-            projectInfo.setCampaignId(projectDetails.getCampaignId());
+            setProjectDetails(projectInfo, projectDetails);
         }
     }
 

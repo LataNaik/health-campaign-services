@@ -12,6 +12,7 @@ import org.egov.common.models.project.Project;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.boundary.BoundaryHierarchyResult;
 import org.egov.transformer.models.downstream.HouseholdMemberIndexV1;
+import org.egov.transformer.models.downstream.ProjectInfo;
 import org.egov.transformer.producer.Producer;
 import org.egov.transformer.service.*;
 import org.egov.transformer.utils.CommonUtils;
@@ -37,8 +38,9 @@ public class HouseholdMemberTransformationService {
     private final ObjectMapper objectMapper;
     private final ProjectService projectService;
     private final BoundaryService boundaryService;
+    private final HouseholdProjectService householdProjectService;
 
-    public HouseholdMemberTransformationService(TransformerProperties transformerProperties, Producer producer, CommonUtils commonUtils, IndividualService individualService, UserService userService, HouseholdService householdService, ObjectMapper objectMapper, ProjectService projectService, BoundaryService boundaryService) {
+    public HouseholdMemberTransformationService(TransformerProperties transformerProperties, Producer producer, CommonUtils commonUtils, IndividualService individualService, UserService userService, HouseholdService householdService, ObjectMapper objectMapper, ProjectService projectService, BoundaryService boundaryService, HouseholdProjectService householdProjectService) {
         this.transformerProperties = transformerProperties;
         this.producer = producer;
         this.commonUtils = commonUtils;
@@ -48,6 +50,7 @@ public class HouseholdMemberTransformationService {
         this.objectMapper = objectMapper;
         this.projectService = projectService;
         this.boundaryService = boundaryService;
+        this.householdProjectService = householdProjectService;
     }
 
     public void transform(List<HouseholdMember> householdMemberList) {
@@ -124,6 +127,11 @@ public class HouseholdMemberTransformationService {
         commonUtils.addProjectDetailsForUserIdAndTenantId(householdMemberIndexV1,
                 householdMember.getClientAuditDetails().getLastModifiedBy(),
                 householdMember.getTenantId());
+        // The user's first project is wrong for users assigned to several campaigns; prefer the one from a delivery task
+        ProjectInfo confirmedProject = householdProjectService.getConfirmedProject(householdMember.getHouseholdClientReferenceId(), householdMember.getTenantId());
+        if (confirmedProject != null) {
+            commonUtils.setProjectDetails(householdMemberIndexV1, confirmedProject);
+        }
         String cycleIndex = commonUtils.fetchCycleIndexFromProjectAdditionalDetails(householdMember.getTenantId(), householdMemberIndexV1.getProjectId(), householdMemberIndexV1.getProjectTypeId(), householdMember.getClientAuditDetails().getCreatedTime());
         additionalDetails.put(CYCLE_INDEX, cycleIndex);
         householdMemberIndexV1.setAdditionalDetails(additionalDetails);

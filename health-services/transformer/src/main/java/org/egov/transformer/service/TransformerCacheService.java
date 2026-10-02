@@ -33,6 +33,16 @@ public class TransformerCacheService {
         redisTemplate.opsForValue().set(finalKey, value, ttl, TimeUnit.MINUTES);
     }
 
+    public void put(String key, String tenantId, Object value, Long ttlMinutes) {
+        if (value == null) {
+            log.warn("Skipping cache put for key {} as value is null", REDIS_CACHE_PREFIX + key);
+            return;
+        }
+        String finalKey = REDIS_CACHE_PREFIX + tenantId + key;
+        log.debug("Adding key {} and value {} in redis cache with ttl {} minutes", finalKey, value, ttlMinutes);
+        redisTemplate.opsForValue().set(finalKey, value, ttlMinutes, TimeUnit.MINUTES);
+    }
+
     public <T> T get(String key, String tenantId, Class<T> clazz) {
         String finalKey = REDIS_CACHE_PREFIX + tenantId + key;
         Object value = redisTemplate.opsForValue().get(finalKey);
